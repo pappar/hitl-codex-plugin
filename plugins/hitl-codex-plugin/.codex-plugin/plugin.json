@@ -1,0 +1,36 @@
+{
+  "name": "hitl-codex-plugin",
+  "version": "0.1.0",
+  "description": "Self-contained Codex plugin for the HITL AI-Driven Development platform. Installs Codex project instructions, lifecycle hooks, git hooks, convention checks, templates, and optional Graphify support.",
+  "author": {
+    "name": "pappar"
+  },
+  "repository": "https://github.com/pappar/hitl-codex-plugin",
+  "license": "MIT",
+  "keywords": [
+    "hitl",
+    "codex",
+    "ai-driven-development",
+    "workflow",
+    "governance"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "HITL Codex",
+    "shortDescription": "Install and follow the HITL Codex workflow",
+    "longDescription": "HITL Codex installs the HITL AI-Driven Development workflow for Codex: docs-first planning, human approval gates, scoped implementation, lifecycle hooks, git hooks, convention checks, traceability, and optional Graphify context retrieval.",
+    "developerName": "pappar",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Install HITL in this repo",
+      "Initialize a HITL change",
+      "Run the HITL workflow"
+    ],
+    "brandColor": "#2563EB"
+  }
+}
