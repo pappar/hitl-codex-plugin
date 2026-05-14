@@ -7,6 +7,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 ONLY="all"
 STRICT=false
 
@@ -54,18 +57,18 @@ if [[ "$ONLY" == "all" || "$ONLY" == "semgrep" ]]; then
   echo "--- Semgrep (code conventions) ---"
   if ! command -v semgrep &>/dev/null; then
     skip_check "semgrep" "not installed (pip install semgrep  OR  brew install semgrep)"
-  elif [[ ! -d ".semgrep" ]]; then
-    skip_check "semgrep" "no .semgrep/ directory — copy from hitl-dev-platform/.semgrep/"
+  elif [[ ! -d "$PLUGIN_ROOT/.semgrep" ]]; then
+    skip_check "semgrep" "plugin Semgrep rules not found at $PLUGIN_ROOT/.semgrep"
   else
-    run_check "semgrep scan" "semgrep scan --config .semgrep/ --error"
+    run_check "semgrep scan" "semgrep scan --config '$PLUGIN_ROOT/.semgrep/' --error"
   fi
   echo ""
 fi
 
 if [[ "$ONLY" == "all" || "$ONLY" == "manifest" ]]; then
   echo "--- Manifest drift ---"
-  if [[ ! -f "ci/manifest-drift/check_manifest_drift.py" ]]; then
-    skip_check "manifest drift" "ci/manifest-drift/check_manifest_drift.py not found — copy from hitl-dev-platform/ci/manifest-drift/"
+  if [[ ! -f "$PLUGIN_ROOT/ci/manifest-drift/check_manifest_drift.py" ]]; then
+    skip_check "manifest drift" "plugin manifest drift checker not found"
   else
     SOURCE_DIRS=""
     [[ -d "app" ]] && SOURCE_DIRS="$SOURCE_DIRS app/"
@@ -73,7 +76,7 @@ if [[ "$ONLY" == "all" || "$ONLY" == "manifest" ]]; then
     if [[ -z "$SOURCE_DIRS" ]]; then
       skip_check "manifest drift" "no app/ or src/ directory found"
     else
-      run_check "manifest drift" "python ci/manifest-drift/check_manifest_drift.py --source-dirs $SOURCE_DIRS"
+      run_check "manifest drift" "python '$PLUGIN_ROOT/ci/manifest-drift/check_manifest_drift.py' --source-dirs $SOURCE_DIRS"
     fi
   fi
   echo ""
@@ -81,12 +84,12 @@ fi
 
 if [[ "$ONLY" == "all" || "$ONLY" == "mermaid" ]]; then
   echo "--- Mermaid br tags ---"
-  if [[ ! -f "scripts/fix_mermaid_br_tags.py" ]]; then
-    skip_check "mermaid br tags" "scripts/fix_mermaid_br_tags.py not found — copy from hitl-dev-platform/scripts/"
+  if [[ ! -f "$PLUGIN_ROOT/scripts/fix_mermaid_br_tags.py" ]]; then
+    skip_check "mermaid br tags" "plugin Mermaid checker not found"
   elif [[ ! -d "docs" ]]; then
     skip_check "mermaid br tags" "no docs/ directory found"
   else
-    run_check "mermaid br tags" "find docs/ -name '*.md' -exec python scripts/fix_mermaid_br_tags.py --check {} +"
+    run_check "mermaid br tags" "find docs/ -name '*.md' -exec python '$PLUGIN_ROOT/scripts/fix_mermaid_br_tags.py' --check {} +"
   fi
   echo ""
 fi

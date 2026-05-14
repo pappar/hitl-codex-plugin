@@ -8,7 +8,9 @@ This repo is a small Codex marketplace containing one plugin:
 plugins/hitl-codex-plugin
 ```
 
-The plugin installs HITL project instructions, Codex lifecycle hooks, git hooks, convention checks, role skills, templates, and optional Graphify support into a target repository.
+The plugin installs HITL project instructions, Codex lifecycle hooks, git hooks, convention checks, role skills, templates, and optional Graphify support.
+
+The target product repo receives only lightweight pointers and wrappers. The plugin payload stays in the Codex plugin folder.
 
 ## Install
 
@@ -23,6 +25,8 @@ Then install HITL into a target git repo:
 ```bash
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh /path/to/target-repo
 ```
+
+This writes only a small `AGENTS.md`, Codex hook config, git-hook wrappers, a convention-check wrapper, `.mcp.json`, and `.graphifyignore` into the target repo. It does not copy the plugin's workflow, scripts, templates, or rule bundles into the product repo.
 
 ## Start
 

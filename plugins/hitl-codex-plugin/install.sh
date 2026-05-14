@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install HITL enforcement and workflow files for Codex users.
+# Install HITL enforcement pointers for Codex users.
 #
 # Usage:
 #   bash /path/to/hitl-codex-plugin/install.sh [target-repo-path]
@@ -22,57 +22,135 @@ if [[ ! -d "$TARGET_DIR/.git" ]]; then
 fi
 
 HOOKS_DIR="$TARGET_DIR/.git/hooks"
+PLUGIN_ROOT_ESCAPED="${PLUGIN_ROOT//\\/\\\\}"
 
-copy_if_missing() {
-  local src="$1"
-  local dest="$2"
-  local label="$3"
-
-  if [[ -f "$dest" ]]; then
-    echo "$label already exists - review $src and merge manually."
-  else
-    mkdir -p "$(dirname "$dest")"
-    cp "$src" "$dest"
-    echo "✓ Copied $label"
-  fi
-}
-
-copy_required() {
-  local src="$1"
-  local dest="$2"
-  local label="$3"
-
+write_file() {
+  local dest="$1"
+  local label="$2"
   mkdir -p "$(dirname "$dest")"
-  cp "$src" "$dest"
-  echo "✓ Copied $label"
+  cat > "$dest"
+  echo "✓ Wrote $label"
 }
 
-copy_if_missing "$PLUGIN_ROOT/AGENTS.md" "$TARGET_DIR/AGENTS.md" "AGENTS.md"
-copy_required "$PLUGIN_ROOT/workflows/full-hitl-workflow.md" "$TARGET_DIR/ai/codex/workflows/full-hitl-workflow.md" "ai/codex/workflows/full-hitl-workflow.md"
-copy_if_missing "$PLUGIN_ROOT/codex/config.toml" "$TARGET_DIR/.ai/codex/config.toml" ".ai/codex/config.toml"
-copy_if_missing "$PLUGIN_ROOT/codex/hooks.json" "$TARGET_DIR/.ai/codex/hooks.json" ".ai/codex/hooks.json"
+if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
+  echo "AGENTS.md already exists - add the HITL router manually if needed."
+else
+  write_file "$TARGET_DIR/AGENTS.md" "AGENTS.md" <<EOF
+# HITL Codex Instructions
 
-mkdir -p "$TARGET_DIR/ai/codex/hook-scripts"
-for script in check-hitl-context.sh check-domain-boundary.sh write-session-summary.sh rebuild-graph.sh test-hooks.sh; do
-  copy_required "$PLUGIN_ROOT/hook-scripts/$script" "$TARGET_DIR/ai/codex/hook-scripts/$script" "ai/codex/hook-scripts/$script"
-  chmod +x "$TARGET_DIR/ai/codex/hook-scripts/$script"
-done
+This project uses the HITL (Human-In-The-Loop) AI-Driven Development workflow.
 
-copy_required "$PLUGIN_ROOT/scripts/hitl-conventions.sh" "$TARGET_DIR/ai/codex/scripts/hitl-conventions.sh" "ai/codex/scripts/hitl-conventions.sh"
+HITL plugin root:
+
+\`\`\`text
+$PLUGIN_ROOT_ESCAPED
+\`\`\`
+
+Detailed workflow:
+
+\`\`\`text
+$PLUGIN_ROOT_ESCAPED/workflows/full-hitl-workflow.md
+\`\`\`
+
+Read the detailed workflow file before substantive HITL work. For role-specific requests, read the relevant section first:
+
+- PM: \`PM Role - Requirements and Product Management\`
+- Architect: \`Architecture Review\`, \`Greenfield System Design\`, \`Architect Design Journey\`
+- Developer: \`Change Initialization\`, \`Developer Role\`, \`TDD Workflow\`, \`Convention Checks\`
+- QA: \`QA Review\`, \`Spec Conformance Review\`, \`TDD Workflow\`
+- Ops: \`Ops Role - Build, Deploy, Infrastructure\`
+- Graphify: \`Knowledge Graph (Graphify)\`
+
+If the human has not stated their role, ask:
+
+\`\`\`text
+Which role are you playing this session? PM / Technical Advisor / Architect / Developer / QA / Ops
+\`\`\`
+
+Core gates:
+
+1. No source code edits without \`.hitl/current-change.yaml\`.
+2. No Tier 2+ implementation without an approved LLD.
+3. Do not implement from a GitHub issue alone.
+4. Stay inside \`allowed_paths\` from \`.hitl/current-change.yaml\`.
+5. Source-of-truth order is GitHub issue / PRD -> approved HLD/LLD -> ADR -> \`docs/system-manifest.yaml\` -> existing code.
+
+If the detailed workflow references bundled templates, Semgrep rules, or utility scripts, use the files under the HITL plugin root above. Do not copy plugin payload into this product repo.
+
+Run convention checks before PR:
+
+\`\`\`bash
+bash ai/codex/scripts/hitl-conventions.sh
+\`\`\`
+EOF
+fi
+
+if [[ -f "$TARGET_DIR/.ai/codex/config.toml" ]]; then
+  echo ".ai/codex/config.toml already exists - keep codex_hooks = true."
+else
+  mkdir -p "$TARGET_DIR/.ai/codex"
+  cp "$PLUGIN_ROOT/codex/config.toml" "$TARGET_DIR/.ai/codex/config.toml"
+  echo "✓ Copied .ai/codex/config.toml"
+fi
+
+write_file "$TARGET_DIR/.ai/codex/hooks.json" ".ai/codex/hooks.json" <<EOF
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_ROOT_ESCAPED/hook-scripts/check-hitl-context.sh'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_ROOT_ESCAPED/hook-scripts/check-domain-boundary.sh'"
+          },
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_ROOT_ESCAPED/hook-scripts/rebuild-graph.sh'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_ROOT_ESCAPED/hook-scripts/write-session-summary.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+
+write_file "$TARGET_DIR/ai/codex/scripts/hitl-conventions.sh" "ai/codex/scripts/hitl-conventions.sh" <<EOF
+#!/usr/bin/env bash
+exec bash '$PLUGIN_ROOT_ESCAPED/scripts/hitl-conventions.sh' "\$@"
+EOF
 chmod +x "$TARGET_DIR/ai/codex/scripts/hitl-conventions.sh"
 
-copy_required "$PLUGIN_ROOT/ci/manifest-drift/check_manifest_drift.py" "$TARGET_DIR/ci/manifest-drift/check_manifest_drift.py" "ci/manifest-drift/check_manifest_drift.py"
-copy_required "$PLUGIN_ROOT/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" "scripts/fix_mermaid_br_tags.py"
-
-mkdir -p "$TARGET_DIR/.semgrep"
-cp -R "$PLUGIN_ROOT/.semgrep/." "$TARGET_DIR/.semgrep/"
-echo "✓ Copied .semgrep/"
-
-copy_required "$PLUGIN_ROOT/shared/templates/hld-template.md" "$TARGET_DIR/ai/shared/templates/hld-template.md" "ai/shared/templates/hld-template.md"
-copy_required "$PLUGIN_ROOT/shared/templates/lld-component-template.md" "$TARGET_DIR/ai/shared/templates/lld-component-template.md" "ai/shared/templates/lld-component-template.md"
+write_file "$TARGET_DIR/ai/codex/hook-scripts/test-hooks.sh" "ai/codex/hook-scripts/test-hooks.sh" <<EOF
+#!/usr/bin/env bash
+exec bash '$PLUGIN_ROOT_ESCAPED/hook-scripts/test-hooks.sh' "\$@"
+EOF
+chmod +x "$TARGET_DIR/ai/codex/hook-scripts/test-hooks.sh"
 
 if [[ ! -f "$TARGET_DIR/.graphifyignore" ]]; then
-  copy_required "$PLUGIN_ROOT/.graphifyignore" "$TARGET_DIR/.graphifyignore" ".graphifyignore"
+  cp "$PLUGIN_ROOT/.graphifyignore" "$TARGET_DIR/.graphifyignore"
+  echo "✓ Copied .graphifyignore"
 else
   echo ".graphifyignore already exists - skipping."
 fi
@@ -104,7 +182,6 @@ else
 fi
 
 for hook in pre-commit post-commit; do
-  src="$PLUGIN_ROOT/git-hooks/$hook"
   dest="$HOOKS_DIR/$hook"
 
   if [[ -f "$dest" ]]; then
@@ -112,9 +189,12 @@ for hook in pre-commit post-commit; do
     echo "  Backed up existing $hook to $hook.hitl-backup"
   fi
 
-  cp "$src" "$dest"
+  cat > "$dest" <<EOF
+#!/usr/bin/env bash
+exec bash '$PLUGIN_ROOT_ESCAPED/git-hooks/$hook' "\$@"
+EOF
   chmod +x "$dest"
-  echo "✓ Installed .git/hooks/$hook"
+  echo "✓ Installed .git/hooks/$hook wrapper"
 done
 
 echo ""
@@ -127,4 +207,7 @@ echo "  4. Start a change:"
 echo "     codex 'Initialize HITL context for GH-42: add user notifications'"
 echo "  5. Before PR, run:"
 echo "     bash ai/codex/scripts/hitl-conventions.sh"
+echo ""
+echo "Installed only lightweight pointers/wrappers; plugin payload remains at:"
+echo "  $PLUGIN_ROOT"
 echo ""
