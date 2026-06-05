@@ -1,6 +1,6 @@
 {
   "name": "hitl-codex-plugin",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Self-contained Codex plugin for the HITL AI-Driven Development platform. Installs Codex project instructions, lifecycle hooks, git hooks, convention checks, templates, and optional Graphify support.",
   "author": {
     "name": "pappar"

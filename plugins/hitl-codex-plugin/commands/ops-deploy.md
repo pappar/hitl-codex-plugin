@@ -1,0 +1,118 @@
+---
+description: "Deploy a verified build artifact to a target environment following the approved rollout plan. Reads rollout strategy from .hitl/current-change.yaml and executes deployment with canary configuration where applicable."
+argument-hint: "[environment: staging|canary|production] [branch or artifact reference]"
+---
+# Deploy to Environment
+
+Deploy a verified artifact to the specified environment, following the approved rollout plan.
+
+**Input:** $ARGUMENTS (environment name and artifact reference)
+
+**Refusal rule:** If `.hitl/current-change.yaml` is missing or `build.status` is not `ready`, stop: "No verified build found. Run `/ops-build` first."
+
+**Graphify pre-flight:** Before the first step, run:
+```bash
+[ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"
+```
+State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
+
+---
+
+## Progress Banners
+
+Output the banner for the current step at the start of every step — before any checks or actions.
+
+Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
+
+| Step | Name | Banner trail |
+|---|---|---|
+| 1 | Pre-deploy Checks | `▶ Pre-deploy · ○ Confirm Config · ○ Execute · ○ Post-deploy` |
+| 2 | Confirm Config | `✅ Pre-deploy · ▶ Confirm Config · ○ Execute · ○ Post-deploy` |
+| 3 | Execute | `✅ Pre-deploy · ✅ Confirm Config · ▶ Execute · ○ Post-deploy` |
+| 4 | Post-deploy | `✅ Pre-deploy · ✅ Confirm Config · ✅ Execute · ▶ Post-deploy` |
+
+---
+
+## Step 1 — Pre-deployment checks
+
+1. Read `.hitl/current-change.yaml` — confirm all of the following are true before proceeding:
+   - `build.status: ready` and `build.artifact` is recorded
+   - `rollout_plan` is present (from the approved impact brief)
+   - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — run `/ops-apply-iac` if pending
+   - `iac_plan.migrations` is either absent/empty or `iac_plan.migrations.status: applied` — run `/ops-migrate-database` if pending
+   - `observability.status: configured` — run `/ops-setup-observability` if missing
+   - `drift_check.result` is `clear` or `caution` — if missing or `blocked`, run `/ops-detect-drift <environment> <change-ID>` and resolve all BLOCKER items before proceeding. A `caution` result requires ops lead acknowledgement before proceeding.
+2. Confirm the target environment is healthy — check existing deployment status before deploying on top of it
+3. Check for active incidents affecting this environment or the domains being deployed — prefer a graph query:
+   ```
+   /graphify query "active incidents in environment: <environment>"
+   /graphify query "recent incidents affecting domain: <domain-name>"
+   ```
+   Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist, say so explicitly — do not skip the check.
+
+If any pre-check fails, list all failures and stop. Do not deploy into an active incident.
+
+---
+
+## Step 2 — Confirm deployment configuration
+
+Based on the rollout plan risk level:
+
+| Risk level | First target | Canary % | Soak time |
+|-----------|-------------|----------|-----------|
+| Low | production | 100% direct | — |
+| Medium | staging → production | 100% | 24h staging soak |
+| High | canary | 5–10% | 4h per step |
+| Critical | canary | 1% | 24h per step, manual gate each step |
+
+1. State the risk level and deployment configuration based on the rollout plan
+2. Confirm with the operator: "Deploying `<artifact>` to `<environment>` at `<canary%>`. Confirm?"
+3. Do not proceed without explicit confirmation
+
+---
+
+## Step 3 — Execute deployment
+
+1. Read the project's deployment configuration (e.g., `deploy/`, `k8s/`, Helm charts, Terraform outputs, CI deploy job)
+2. Present the exact deployment command before running it
+3. On confirmation, execute the deployment
+4. Monitor progress — watch for error logs or failed health checks during rollout
+5. Confirm the new artifact version is serving traffic: health endpoints, version endpoints, or deployment status output
+
+---
+
+## Step 4 — Post-deployment verification
+
+1. Run the manual verification scenarios from the impact brief (Section 3 — deployment-time checks)
+2. Confirm the deployment is stable and no error rate spike is visible in observability
+3. Update `.hitl/current-change.yaml`:
+
+```yaml
+deployment:
+  environment: <environment>
+  artifact: <artifact-reference>
+  canary_percentage: <N or 100>
+  deployed_at: <ISO timestamp>
+  status: deployed
+```
+
+Post a comment on the GitHub issue, then report to the team:
+
+```bash
+gh issue comment <issue-number> \
+  --body "## 🚀 Deployed to <environment>
+
+**Artifact:** <artifact-reference>
+**Deployed at:** <ISO timestamp>
+**Rollout:** <canary N% / 100% direct>
+
+<If canary: 'Run monitor canary metrics via your observability dashboard to assess go/no-go criteria before promoting to next tier.'>
+<If production 100%: 'Feature is live.'>"
+```
+
+For canary deployments: proceed to `monitor canary metrics via your observability dashboard` to assess go/no-go before promoting to the next tier.
+
+For the final production promotion (100% traffic, all go/no-go criteria met):
+- Run `/ops-post-deploy-monitor <change-ID>` — this is required for all Tier 2+ changes. The soak duration is determined by risk level (Low: 1h, Medium: 4h, High: 12h, Critical: 24h). Do not close the issue or declare the change complete until post-deploy monitor produces a STABLE verdict.
+- If the post-deploy monitor produces ROLLBACK: run `/ops-rollback`.
+
