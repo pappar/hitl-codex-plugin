@@ -9,7 +9,7 @@ Use this skill when the user is acting as Ops or asks to build, apply infrastruc
 
 ## Source Of Truth
 
-Read the target repo's `AGENTS.md`, then read `ai/codex/workflows/full-hitl-workflow.md` and follow these sections:
+Read the target repo's `AGENTS.md` first — it contains the absolute path to the detailed workflow file. Read that workflow file and follow these sections:
 
 - `Ops Role - Build, Deploy, Infrastructure`
 - `Before Creating a PR`

@@ -14,13 +14,21 @@ The target product repo receives only lightweight pointers and wrappers. The plu
 
 ## Install
 
-Add this repo as a Codex marketplace:
+**Step 1 — Add this repo as a Codex marketplace:**
 
 ```bash
 codex plugin marketplace add /path/to/hitl-codex-plugin
 ```
 
-Then install HITL into a target git repo:
+**Step 2 — Install the plugin into Codex** (required for skills to load):
+
+```bash
+codex plugin add hitl-codex-plugin@hitl-codex
+```
+
+Verify installation: `codex plugin list` should show `hitl-codex-plugin` as `installed, enabled`.
+
+**Step 3 — Install HITL into a target git repo:**
 
 ```bash
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh /path/to/target-repo

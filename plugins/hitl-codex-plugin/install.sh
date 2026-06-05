@@ -98,7 +98,7 @@ write_file "$TARGET_DIR/.ai/codex/hooks.json" ".ai/codex/hooks.json" <<EOF
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -109,7 +109,7 @@ write_file "$TARGET_DIR/.ai/codex/hooks.json" ".ai/codex/hooks.json" <<EOF
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|apply_patch",
         "hooks": [
           {
             "type": "command",

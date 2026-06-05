@@ -9,7 +9,7 @@ Use this skill when the user is acting as Developer or asks to implement, refact
 
 ## Source Of Truth
 
-Read the target repo's `AGENTS.md`, then read `ai/codex/workflows/full-hitl-workflow.md` and follow these sections:
+Read the target repo's `AGENTS.md` first — it contains the absolute path to the detailed workflow file. Read that workflow file and follow these sections:
 
 - `Core Rules (always apply)`
 - `Change Initialization`

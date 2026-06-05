@@ -12,7 +12,7 @@ Use this skill for HITL AI-Driven Development work in Codex. This plugin is self
 Skills are guidance, not enforcement. HITL enforcement comes from the files installed into the target repo:
 
 1. `AGENTS.md` provides the full workflow brain and trigger phrases.
-   The detailed workflow is installed at `ai/codex/workflows/full-hitl-workflow.md` and loaded on demand so root `AGENTS.md` stays small enough for Codex context.
+   `AGENTS.md` contains the absolute path to the detailed workflow file under the plugin root. Read `AGENTS.md` to get that path before starting any HITL work.
 2. `.ai/codex/hooks.json` blocks or warns during Codex lifecycle events.
 3. `.git/hooks/pre-commit` and `.git/hooks/post-commit` catch bypasses outside Codex.
 4. `ai/codex/scripts/hitl-conventions.sh` provides PR gate checks.
