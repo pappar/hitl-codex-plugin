@@ -2,77 +2,93 @@
 
 Codex plugin for the HITL AI-Driven Development workflow.
 
-This repo is a small Codex marketplace containing one plugin:
+This repo is a Codex marketplace containing one plugin: `plugins/hitl-codex-plugin`.
 
-```text
-plugins/hitl-codex-plugin
-```
+There are **two separate install steps** with different scopes:
 
-The plugin installs HITL project instructions, Codex lifecycle hooks, git hooks, convention checks, role skills, templates, and optional Graphify support.
+| Step | What it does | Scope |
+|---|---|---|
+| `codex plugin add` | Installs the plugin into Codex — slash commands, skills, workflow files | Global (Codex manages `~/.codex/plugins/cache/`) |
+| `install.sh` | Bootstraps a specific project — `AGENTS.md`, lifecycle hooks, git hooks | Per project (run once per repo) |
 
-The target product repo receives only lightweight pointers and wrappers. The plugin payload stays in the Codex plugin folder.
+You need both for the full HITL enforcement layer. You can use the slash commands (`/apply-change`, `/tdd`, etc.) without running `install.sh`, but the hook enforcement (blocking source edits without a context file, git pre-commit checks) requires it.
 
-## Install
+## Step 1 — Install the Codex plugin (global, once)
 
-**Step 1 — Add this repo as a Codex marketplace:**
+Add this repo as a marketplace and install the plugin:
 
 ```bash
 codex plugin marketplace add /path/to/hitl-codex-plugin
-```
-
-**Step 2 — Install the plugin:**
-
-```bash
 codex plugin add hitl-codex-plugin@hitl-codex
 ```
 
-**Step 3 — Install HITL into a target git repo:**
-
-```bash
-bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh /path/to/target-repo
+Codex stores the installed plugin under its managed cache:
+```text
+~/.codex/plugins/cache/hitl-codex/hitl-codex-plugin/<version>/
 ```
 
-This writes a small `AGENTS.md` (with a managed block that upgrades automatically), Codex hook config, git-hook wrappers, a convention-check wrapper, `.mcp.json`, and `.graphifyignore` into the target repo. The plugin's workflow, scripts, templates, and rule bundles stay in the plugin folder.
+After this step, all 43 HITL slash commands are available in every Codex session:
+`/apply-change`, `/architect-design-feature`, `/tdd`, `/ta-approve`, `/pm-design-feature`, etc.
+
+## Step 2 — Bootstrap a project (per repo, optional but recommended)
+
+Run `install.sh` from the **cached plugin**, pointing at the target project:
+
+```bash
+PLUGIN_CACHE=~/.codex/plugins/cache/hitl-codex/hitl-codex-plugin
+VERSION=$(ls "$PLUGIN_CACHE" | sort -V | tail -1)
+bash "$PLUGIN_CACHE/$VERSION/install.sh" /path/to/your-project
+```
+
+This writes into the target project:
+- `AGENTS.md` — points Codex at the cached workflow file; has a managed block that upgrades automatically
+- `.ai/codex/hooks.json` — lifecycle hooks that block source edits before design gates are approved
+- `.git/hooks/pre-commit` / `post-commit` — git-level enforcement; chains your original hooks if present
+- `ai/codex/scripts/hitl-conventions.sh` — pre-PR convention check wrapper
+
+Do **not** run `install.sh` inside `~/.codex` or the marketplace repo itself. Run it from the cached plugin and point it at your project directory.
 
 ## Upgrade
 
+**Re-install the plugin in Codex** to pick up a new version:
+
 ```bash
-# 1 — Pull the latest plugin code
-cd /path/to/hitl-codex-plugin
-git pull
-
-# 2 — Reinstall the plugin in Codex
+codex plugin marketplace remove hitl-codex
+codex plugin marketplace add /path/to/hitl-codex-plugin
 codex plugin add hitl-codex-plugin@hitl-codex
-
-# 3 — Re-run install.sh in the target repo
-#     Updates AGENTS.md managed block, hooks.json, and git-hook wrappers.
-#     Any project-specific content you added outside the managed block is preserved.
-cd /path/to/target-repo
-bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
-
-# 4 — Verify hooks
-bash ai/codex/hook-scripts/test-hooks.sh   # should show: 18 passed, 0 failed
-
-# 5 — Verify installer idempotency (optional, run from plugin repo)
-bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/hook-scripts/test-install.sh  # should show: 11 passed, 0 failed
 ```
 
-Note: `codex plugin marketplace upgrade` only works for Git-sourced marketplaces, not local paths. For local development, use `codex plugin add` to reinstall.
+**Re-bootstrap the project** to update hook configs and the AGENTS.md managed block:
 
-Note: if your repo had a custom `.git/hooks/pre-commit` before HITL install, the original is preserved as `.git/hooks/pre-commit.hitl-backup`. The generated wrapper runs HITL checks first; if they pass, it chains your original hook automatically. No manual wiring needed.
+```bash
+PLUGIN_CACHE=~/.codex/plugins/cache/hitl-codex/hitl-codex-plugin
+VERSION=$(ls "$PLUGIN_CACHE" | sort -V | tail -1)
+cd /path/to/your-project
+bash "$PLUGIN_CACHE/$VERSION/install.sh" .
+bash ai/codex/hook-scripts/test-hooks.sh   # should show: 18 passed, 0 failed
+```
+
+Custom content you added below the `<!-- HITL:MANAGED:END -->` marker in `AGENTS.md` is preserved automatically on re-run.
+
+Note: `codex plugin marketplace upgrade` only works for Git-sourced marketplaces, not local paths.
+
+Note: if your repo had a custom `.git/hooks/pre-commit`, the original is preserved as `.git/hooks/pre-commit.hitl-backup` and chained automatically after HITL checks pass.
 
 ## Start
 
-Open Codex in the target repo and start a workflow:
+Slash commands work immediately after Step 1, in any Codex session:
 
 ```bash
-codex "I am the PM. Start the HITL pm/design-feature workflow."
+/apply-change GH-42
+/architect-design-feature
+/tdd
+/ta-approve
 ```
 
-or:
+Or use natural language:
 
 ```bash
-codex "Initialize HITL context for GH-42: add user notifications"
+codex "I am the PM. Run /pm-design-feature — we want to add user notifications."
 ```
 
 ## Further Reading
