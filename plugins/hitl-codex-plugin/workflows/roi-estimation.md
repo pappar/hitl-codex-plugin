@@ -83,7 +83,7 @@ token_tracking:
         cost_usd: 0.52
 ```
 
-After each Claude Code session, record the session cost and which steps were covered. The session cost appears in the Claude Code session summary.
+After each Codex session, record the session cost and which steps were covered. The session cost appears in your AI provider's usage dashboard or session summary.
 
 ### Cross-change registry
 
@@ -96,8 +96,8 @@ At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/
 | Input | Token estimate |
 |-------|---------------|
 | File content | chars ÷ 4 |
-| Claude Sonnet 4.6 input rate | $3 / M tokens |
-| Claude Sonnet 4.6 output rate | $15 / M tokens |
+| Model input rate | see your provider's pricing page |
+| Model output rate | see your provider's pricing page |
 | Typical output/input ratio | 0.3× for review steps; 0.5× for generation steps |
 
 Estimates are intentionally rough. The registry calibrates them over time — if actual consistently exceeds estimated by >50%, adjust the ratio for that phase.

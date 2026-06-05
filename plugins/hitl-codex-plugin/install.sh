@@ -32,13 +32,9 @@ write_file() {
   echo "✓ Wrote $label"
 }
 
-# Build the HITL-managed block content (always regenerated on install/upgrade)
-HITL_BLOCK="# HITL Codex Instructions
-
-This project uses the HITL (Human-In-The-Loop) AI-Driven Development workflow.
-
-<!-- HITL:MANAGED:BEGIN -->
-HITL plugin root:
+# HITL_MANAGED_CONTENT = the inner operational content only (no markers, no heading).
+# The markers are added by the write/replace logic below so they appear exactly once.
+HITL_MANAGED_CONTENT="HITL plugin root:
 
 \`\`\`text
 $PLUGIN_ROOT_ESCAPED
@@ -79,21 +75,21 @@ Run convention checks before PR:
 
 \`\`\`bash
 bash ai/codex/scripts/hitl-conventions.sh
-\`\`\`
-<!-- HITL:MANAGED:END -->"
+\`\`\`"
 
 if [[ ! -f "$TARGET_DIR/AGENTS.md" ]]; then
-  printf '%s\n' "$HITL_BLOCK" > "$TARGET_DIR/AGENTS.md"
+  printf '# HITL Codex Instructions\n\nThis project uses the HITL (Human-In-The-Loop) AI-Driven Development workflow.\n\n<!-- HITL:MANAGED:BEGIN -->\n%s\n<!-- HITL:MANAGED:END -->\n' \
+    "$HITL_MANAGED_CONTENT" > "$TARGET_DIR/AGENTS.md"
   echo "✓ Wrote AGENTS.md"
 elif grep -q "HITL:MANAGED:BEGIN" "$TARGET_DIR/AGENTS.md"; then
-  # Replace the managed block in place, preserving any custom content outside it
-  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_BLOCK" << 'PYEOF'
+  # Replace only the managed block; everything outside the markers (heading, custom content) is preserved.
+  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_MANAGED_CONTENT" << 'PYEOF'
 import sys, re
-path, new_block = sys.argv[1], sys.argv[2]
+path, new_content = sys.argv[1], sys.argv[2]
 content = open(path).read()
 updated = re.sub(
     r'<!-- HITL:MANAGED:BEGIN -->.*?<!-- HITL:MANAGED:END -->',
-    f'<!-- HITL:MANAGED:BEGIN -->\n{new_block}\n<!-- HITL:MANAGED:END -->',
+    f'<!-- HITL:MANAGED:BEGIN -->\n{new_content}\n<!-- HITL:MANAGED:END -->',
     content,
     flags=re.DOTALL
 )
@@ -102,11 +98,12 @@ PYEOF
   echo "✓ Updated HITL managed block in existing AGENTS.md (custom content preserved)"
 else
   echo "AGENTS.md exists without HITL markers — prepending managed block."
-  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_BLOCK" << 'PYEOF'
+  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_MANAGED_CONTENT" << 'PYEOF'
 import sys
-path, new_block = sys.argv[1], sys.argv[2]
+path, new_content = sys.argv[1], sys.argv[2]
 existing = open(path).read()
-open(path, 'w').write(f'{new_block}\n\n{existing}')
+managed = f'<!-- HITL:MANAGED:BEGIN -->\n{new_content}\n<!-- HITL:MANAGED:END -->'
+open(path, 'w').write(f'{managed}\n\n{existing}')
 PYEOF
   echo "✓ Prepended HITL managed block to AGENTS.md"
 fi
@@ -209,10 +206,15 @@ fi
 
 for hook in pre-commit post-commit; do
   dest="$HOOKS_DIR/$hook"
+  backup="$dest.hitl-backup"
 
   if [[ -f "$dest" ]]; then
-    cp "$dest" "$dest.hitl-backup"
-    echo "  Backed up existing $hook to $hook.hitl-backup"
+    if [[ ! -f "$backup" ]]; then
+      cp "$dest" "$backup"
+      echo "  Backed up existing $hook to $hook.hitl-backup"
+    else
+      echo "  $hook.hitl-backup already exists — skipping backup to preserve original"
+    fi
   fi
 
   cat > "$dest" <<EOF

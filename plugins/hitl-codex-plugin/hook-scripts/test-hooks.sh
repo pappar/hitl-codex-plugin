@@ -185,6 +185,87 @@ else
   popd > /dev/null
 fi
 
+# --- LLD artifact gate regression tests ---
+
+echo ""
+echo "=== check-hitl-context.sh — LLD gate (Tier 2 regression) ==="
+echo ""
+
+TMPDIR_LLD=$(mktemp -d)
+trap "rm -rf $TMPDIR_LLD" EXIT
+pushd "$TMPDIR_LLD" > /dev/null
+git init -q
+mkdir -p .hitl
+
+# T15: Tier 2 + implementation-approved + lld:pending → block (exit 2)
+cat > .hitl/current-change.yaml << 'YAML'
+change_id: GH-10
+tier: 2
+status: implementation-approved
+manifest:
+  path: docs/system-manifest.yaml
+  domain: app
+source_artifacts:
+  lld: pending
+allowed_paths:
+  - src/app.py
+YAML
+INPUT='{"tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\n*** Add File: src/app.py\n+x=1\n*** End Patch\n"}}'
+echo "$INPUT" | bash "$CONTEXT_SCRIPT" 2>/dev/null; R=$?
+assert_exit "Tier 2 + lld:pending → exit 2 (LLD gate)" 2 $R
+
+# T16: Tier 2 + implementation-approved + lld points to missing file → block (exit 2)
+cat > .hitl/current-change.yaml << 'YAML'
+change_id: GH-10
+tier: 2
+status: implementation-approved
+manifest:
+  path: docs/system-manifest.yaml
+  domain: app
+source_artifacts:
+  lld: docs/lld/no-such-lld.md
+allowed_paths:
+  - src/app.py
+YAML
+echo "$INPUT" | bash "$CONTEXT_SCRIPT" 2>/dev/null; R=$?
+assert_exit "Tier 2 + lld missing file → exit 2 (LLD gate)" 2 $R
+
+# T17: Tier 2 + implementation-approved + lld exists → allow (exit 0)
+mkdir -p docs/lld
+echo "# LLD" > docs/lld/app.md
+cat > .hitl/current-change.yaml << 'YAML'
+change_id: GH-10
+tier: 2
+status: implementation-approved
+manifest:
+  path: docs/system-manifest.yaml
+  domain: app
+source_artifacts:
+  lld: docs/lld/app.md
+allowed_paths:
+  - src/app.py
+YAML
+echo "$INPUT" | bash "$CONTEXT_SCRIPT" 2>/dev/null; R=$?
+assert_exit "Tier 2 + lld exists → exit 0 (LLD gate pass)" 0 $R
+
+# T18: Tier 1 + implementation-approved + lld:pending → allow (Tier 1 skips LLD check)
+cat > .hitl/current-change.yaml << 'YAML'
+change_id: GH-10
+tier: 1
+status: implementation-approved
+manifest:
+  path: docs/system-manifest.yaml
+  domain: app
+source_artifacts:
+  lld: pending
+allowed_paths:
+  - src/app.py
+YAML
+echo "$INPUT" | bash "$CONTEXT_SCRIPT" 2>/dev/null; R=$?
+assert_exit "Tier 1 + lld:pending → exit 0 (Tier 1 exempt)" 0 $R
+
+popd > /dev/null
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""
