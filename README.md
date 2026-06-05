@@ -20,21 +20,44 @@ The target product repo receives only lightweight pointers and wrappers. The plu
 codex plugin marketplace add /path/to/hitl-codex-plugin
 ```
 
-**Step 2 — Install the plugin into Codex** (required for skills to load):
+The plugin is marked `INSTALLED_BY_DEFAULT` — it installs automatically when the marketplace is added. No separate install command is needed.
 
-```bash
-codex plugin add hitl-codex-plugin@hitl-codex
-```
-
-Verify installation: `codex plugin list` should show `hitl-codex-plugin` as `installed, enabled`.
-
-**Step 3 — Install HITL into a target git repo:**
+**Step 2 — Install HITL into a target git repo:**
 
 ```bash
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh /path/to/target-repo
 ```
 
 This writes only a small `AGENTS.md`, Codex hook config, git-hook wrappers, a convention-check wrapper, `.mcp.json`, and `.graphifyignore` into the target repo. It does not copy the plugin's workflow, scripts, templates, or rule bundles into the product repo.
+
+## Upgrade
+
+To get the latest version of the plugin after pulling:
+
+```bash
+# 1 — Pull the latest plugin code
+cd /path/to/hitl-codex-plugin
+git pull
+
+# 2 — Tell Codex to re-read the marketplace
+codex plugin marketplace upgrade hitl-codex
+
+# 3 — Regenerate the target repo's hook config (picks up new hook matchers etc.)
+cd /path/to/target-repo
+rm AGENTS.md        # remove so install.sh regenerates it; skip if you've added custom content
+bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
+
+# 4 — Verify
+bash ai/codex/hook-scripts/test-hooks.sh   # should show: 14 passed, 0 failed
+```
+
+If `AGENTS.md` has custom project conventions, back it up before removing:
+```bash
+cp AGENTS.md AGENTS.md.bak
+rm AGENTS.md
+bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
+cat AGENTS.md.bak >> AGENTS.md && rm AGENTS.md.bak
+```
 
 ## Start
 
