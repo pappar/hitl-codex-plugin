@@ -50,11 +50,16 @@ codex plugin add hitl-codex-plugin@hitl-codex
 cd /path/to/target-repo
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
 
-# 4 — Verify
-bash ai/codex/hook-scripts/test-hooks.sh   # should show: 14 passed, 0 failed
+# 4 — Verify hooks
+bash ai/codex/hook-scripts/test-hooks.sh   # should show: 18 passed, 0 failed
+
+# 5 — Verify installer idempotency (optional, run from plugin repo)
+bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/hook-scripts/test-install.sh  # should show: 11 passed, 0 failed
 ```
 
 Note: `codex plugin marketplace upgrade` only works for Git-sourced marketplaces, not local paths. For local development, use `codex plugin add` to reinstall.
+
+Note: if your repo had a custom `.git/hooks/pre-commit` before HITL install, the original is preserved as `.git/hooks/pre-commit.hitl-backup`. The generated wrapper runs HITL checks first; if they pass, it chains your original hook automatically. No manual wiring needed.
 
 ## Start
 

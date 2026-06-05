@@ -217,10 +217,27 @@ for hook in pre-commit post-commit; do
     fi
   fi
 
-  cat > "$dest" <<EOF
+  if [[ "$hook" == "pre-commit" ]]; then
+    # pre-commit: HITL runs first. If it blocks (non-zero), stop the commit.
+    # If it passes, chain the original hook so existing checks still run.
+    cat > "$dest" <<EOF
 #!/usr/bin/env bash
-exec bash '$PLUGIN_ROOT_ESCAPED/git-hooks/$hook' "\$@"
+bash '$PLUGIN_ROOT_ESCAPED/git-hooks/pre-commit' "\$@"
+HITL_EXIT=\$?
+[[ \$HITL_EXIT -ne 0 ]] && exit \$HITL_EXIT
+BACKUP="\$(git rev-parse --git-dir 2>/dev/null)/hooks/pre-commit.hitl-backup"
+[[ -x "\$BACKUP" ]] && exec bash "\$BACKUP" "\$@"
+exit 0
 EOF
+  else
+    # post-commit: HITL runs first, then original hook is chained unconditionally.
+    cat > "$dest" <<EOF
+#!/usr/bin/env bash
+bash '$PLUGIN_ROOT_ESCAPED/git-hooks/post-commit' "\$@"
+BACKUP="\$(git rev-parse --git-dir 2>/dev/null)/hooks/post-commit.hitl-backup"
+[[ -x "\$BACKUP" ]] && exec bash "\$BACKUP" "\$@"
+EOF
+  fi
   chmod +x "$dest"
   echo "✓ Installed .git/hooks/$hook wrapper"
 done
