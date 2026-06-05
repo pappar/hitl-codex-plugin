@@ -32,14 +32,12 @@ write_file() {
   echo "✓ Wrote $label"
 }
 
-if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
-  echo "AGENTS.md already exists - add the HITL router manually if needed."
-else
-  write_file "$TARGET_DIR/AGENTS.md" "AGENTS.md" <<EOF
-# HITL Codex Instructions
+# Build the HITL-managed block content (always regenerated on install/upgrade)
+HITL_BLOCK="# HITL Codex Instructions
 
 This project uses the HITL (Human-In-The-Loop) AI-Driven Development workflow.
 
+<!-- HITL:MANAGED:BEGIN -->
 HITL plugin root:
 
 \`\`\`text
@@ -70,7 +68,7 @@ Which role are you playing this session? PM / Technical Advisor / Architect / De
 Core gates:
 
 1. No source code edits without \`.hitl/current-change.yaml\`.
-2. No Tier 2+ implementation without an approved LLD.
+2. No Tier 2+ implementation without an approved LLD (source_artifacts.lld must not be 'pending' and file must exist).
 3. Do not implement from a GitHub issue alone.
 4. Stay inside \`allowed_paths\` from \`.hitl/current-change.yaml\`.
 5. Source-of-truth order is GitHub issue / PRD -> approved HLD/LLD -> ADR -> \`docs/system-manifest.yaml\` -> existing code.
@@ -82,7 +80,35 @@ Run convention checks before PR:
 \`\`\`bash
 bash ai/codex/scripts/hitl-conventions.sh
 \`\`\`
-EOF
+<!-- HITL:MANAGED:END -->"
+
+if [[ ! -f "$TARGET_DIR/AGENTS.md" ]]; then
+  printf '%s\n' "$HITL_BLOCK" > "$TARGET_DIR/AGENTS.md"
+  echo "✓ Wrote AGENTS.md"
+elif grep -q "HITL:MANAGED:BEGIN" "$TARGET_DIR/AGENTS.md"; then
+  # Replace the managed block in place, preserving any custom content outside it
+  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_BLOCK" << 'PYEOF'
+import sys, re
+path, new_block = sys.argv[1], sys.argv[2]
+content = open(path).read()
+updated = re.sub(
+    r'<!-- HITL:MANAGED:BEGIN -->.*?<!-- HITL:MANAGED:END -->',
+    f'<!-- HITL:MANAGED:BEGIN -->\n{new_block}\n<!-- HITL:MANAGED:END -->',
+    content,
+    flags=re.DOTALL
+)
+open(path, 'w').write(updated)
+PYEOF
+  echo "✓ Updated HITL managed block in existing AGENTS.md (custom content preserved)"
+else
+  echo "AGENTS.md exists without HITL markers — prepending managed block."
+  python3 - "$TARGET_DIR/AGENTS.md" "$HITL_BLOCK" << 'PYEOF'
+import sys
+path, new_block = sys.argv[1], sys.argv[2]
+existing = open(path).read()
+open(path, 'w').write(f'{new_block}\n\n{existing}')
+PYEOF
+  echo "✓ Prepended HITL managed block to AGENTS.md"
 fi
 
 if [[ -f "$TARGET_DIR/.ai/codex/config.toml" ]]; then

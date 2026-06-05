@@ -103,7 +103,9 @@ assert_exit "Claude Edit README.md, no context → exit 0" 0 $R
 
 # --- With context file ---
 
-mkdir -p .hitl
+mkdir -p .hitl docs/02-design/technical/lld/app
+# Create a real LLD file so the Tier 2 LLD artifact gate passes
+echo "# LLD — app" > docs/02-design/technical/lld/app/app.md
 cat > .hitl/current-change.yaml << 'YAML'
 change_id: GH-1
 tier: 2
@@ -111,6 +113,8 @@ status: implementation-approved
 manifest:
   path: docs/system-manifest.yaml
   domain: app
+source_artifacts:
+  lld: docs/02-design/technical/lld/app/app.md
 allowed_paths:
   - src/app.py
 YAML

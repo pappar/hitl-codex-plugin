@@ -1,7 +1,7 @@
 # System Manifest — Template
 #
 # Copy this to docs/system-manifest.yaml and customize for your project.
-# For a fully worked example, see examples/greenfield/docs/system-manifest.yaml
+# Fill in each domain section based on your system architecture.
 #
 # The manifest defines domain boundaries, file ownership, facade APIs,
 # and cross-cutting conventions. AI tools read it to stay scoped.

@@ -102,4 +102,21 @@ if [[ "$ALLOWED" == "false" ]]; then
   exit 2
 fi
 
+# For Tier 2+ at implementation-approved: verify LLD is present before the first source edit.
+# Later statuses (conformance-review-pending, merged, etc.) don't re-check the LLD path.
+TIER=$(grep "^tier:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "0")
+if [[ "$TIER" -ge 2 && "$STATUS" == "implementation-approved" ]]; then
+  LLD_PATH=$(awk '/^[[:space:]]+lld:/{gsub(/["\x27]/, "", $2); print $2; exit}' "$CONTEXT_FILE" || echo "")
+  if [[ -z "$LLD_PATH" || "$LLD_PATH" == "pending" || "$LLD_PATH" == "missing" ]]; then
+    echo "HITL BLOCKED: Tier 2+ change requires an approved LLD." >&2
+    echo "  source_artifacts.lld is '${LLD_PATH:-missing}' — generate the LLD before editing source code." >&2
+    exit 2
+  fi
+  if [[ ! -f "$LLD_PATH" ]]; then
+    echo "HITL BLOCKED: LLD not found at '${LLD_PATH}'." >&2
+    echo "  Verify the path in source_artifacts.lld or regenerate the LLD." >&2
+    exit 2
+  fi
+fi
+
 exit 0

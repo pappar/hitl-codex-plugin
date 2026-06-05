@@ -20,44 +20,41 @@ The target product repo receives only lightweight pointers and wrappers. The plu
 codex plugin marketplace add /path/to/hitl-codex-plugin
 ```
 
-The plugin is marked `INSTALLED_BY_DEFAULT` — it installs automatically when the marketplace is added. No separate install command is needed.
+**Step 2 — Install the plugin:**
 
-**Step 2 — Install HITL into a target git repo:**
+```bash
+codex plugin add hitl-codex-plugin@hitl-codex
+```
+
+**Step 3 — Install HITL into a target git repo:**
 
 ```bash
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh /path/to/target-repo
 ```
 
-This writes only a small `AGENTS.md`, Codex hook config, git-hook wrappers, a convention-check wrapper, `.mcp.json`, and `.graphifyignore` into the target repo. It does not copy the plugin's workflow, scripts, templates, or rule bundles into the product repo.
+This writes a small `AGENTS.md` (with a managed block that upgrades automatically), Codex hook config, git-hook wrappers, a convention-check wrapper, `.mcp.json`, and `.graphifyignore` into the target repo. The plugin's workflow, scripts, templates, and rule bundles stay in the plugin folder.
 
 ## Upgrade
-
-To get the latest version of the plugin after pulling:
 
 ```bash
 # 1 — Pull the latest plugin code
 cd /path/to/hitl-codex-plugin
 git pull
 
-# 2 — Tell Codex to re-read the marketplace
-codex plugin marketplace upgrade hitl-codex
+# 2 — Reinstall the plugin in Codex
+codex plugin add hitl-codex-plugin@hitl-codex
 
-# 3 — Regenerate the target repo's hook config (picks up new hook matchers etc.)
+# 3 — Re-run install.sh in the target repo
+#     Updates AGENTS.md managed block, hooks.json, and git-hook wrappers.
+#     Any project-specific content you added outside the managed block is preserved.
 cd /path/to/target-repo
-rm AGENTS.md        # remove so install.sh regenerates it; skip if you've added custom content
 bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
 
 # 4 — Verify
 bash ai/codex/hook-scripts/test-hooks.sh   # should show: 14 passed, 0 failed
 ```
 
-If `AGENTS.md` has custom project conventions, back it up before removing:
-```bash
-cp AGENTS.md AGENTS.md.bak
-rm AGENTS.md
-bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh .
-cat AGENTS.md.bak >> AGENTS.md && rm AGENTS.md.bak
-```
+Note: `codex plugin marketplace upgrade` only works for Git-sourced marketplaces, not local paths. For local development, use `codex plugin add` to reinstall.
 
 ## Start
 

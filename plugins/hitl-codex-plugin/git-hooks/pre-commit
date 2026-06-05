@@ -89,13 +89,21 @@ if [[ "$STATUS_APPROVED" == "false" ]]; then
   fi
 fi
 
-# LLD existence check for Tier 2+ (strict mode)
-if [[ "$STRICT" == "true" && "$TIER" -ge 2 ]]; then
+# LLD artifact check for Tier 2+ with implementation-approved status (always — not just strict mode).
+# A context claiming implementation-approved but with lld:pending is an inconsistent state.
+if [[ "$TIER" -ge 2 && "$STATUS" == "implementation-approved" ]]; then
   LLD_PATH=$(grep "^  lld:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "")
-  if [[ -n "$LLD_PATH" && "$LLD_PATH" != "pending" && ! -f "$LLD_PATH" ]]; then
+  if [[ -z "$LLD_PATH" || "$LLD_PATH" == "pending" ]]; then
     echo "" >&2
-    echo "HITL BLOCKED (strict mode): LLD not found at '$LLD_PATH'." >&2
-    echo "Create or approve the LLD before committing Tier $TIER source code." >&2
+    echo "HITL BLOCKED: Tier $TIER change has source_artifacts.lld = '${LLD_PATH:-missing}'." >&2
+    echo "Generate and approve the LLD before committing source code." >&2
+    echo "" >&2
+    exit 1
+  fi
+  if [[ ! -f "$LLD_PATH" ]]; then
+    echo "" >&2
+    echo "HITL BLOCKED: LLD not found at '$LLD_PATH'." >&2
+    echo "Verify the path in source_artifacts.lld or regenerate the LLD." >&2
     echo "" >&2
     exit 1
   fi

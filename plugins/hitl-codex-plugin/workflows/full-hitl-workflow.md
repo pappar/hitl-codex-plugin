@@ -67,9 +67,9 @@ When in doubt, use the heavier tier. Cross-domain or multi-dozen-line changes ar
 
 If no idea is provided, ask: "What feature are you thinking about? Describe the rough idea — we'll refine it together."
 
-**Ask first:** "What level of challenge would you like? Rigorous / Moderate / Light (default: Moderate)." See `ai/shared/challenge-stance.md` — Challenge Levels section for what each means.
+**Ask first:** "What level of challenge would you like? Rigorous / Moderate / Light (default: Moderate)." See `shared/challenge-stance.md` (under the plugin root) — Challenge Levels section for what each means.
 
-**TODO deferral is always available** at any level. When the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Present collected open items at the end of Phase 1. See `ai/shared/challenge-stance.md` — TODO Deferral section.
+**TODO deferral is always available** at any level. When the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Present collected open items at the end of Phase 1. See `shared/challenge-stance.md` (under the plugin root) — TODO Deferral section.
 
 This is a 7-phase process. Do not skip phases or write to the PRD until all phases are approved.
 
@@ -89,7 +89,7 @@ Use ✅ for approved phases, ▶ for current, ○ for upcoming.
 Ask one at a time. Wait for each answer before asking the next.
 
 1. **Delivery surface?** Web UI, mobile (iOS/Android/responsive), API/backend only, agentic workflow, internal/ops tool, or combination? This gates which later phases apply.
-   - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with Claude Design**. Say immediately: "Since this has a UI, we'll prototype it with Claude Design in Phase 4 — text-only requirements for UI features are incomplete."
+   - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with a design tool**. Say immediately: "Since this has a UI, we'll prototype it with a design tool in Phase 4 — text-only requirements for UI features are incomplete."
    - Backend/API only → Phase 4 skipped; acceptance criteria will be contract-shaped.
    - Agentic → Phase 4 replaced with tool schema, decision flow, and HITL gate definitions.
    - *Follow-up (if vague):* "Is there a primary surface, or are they truly equal-priority?"
@@ -158,7 +158,7 @@ Present a table: scenario | proposed handling. **STOP — get confirmation befor
 
 - **API/Backend only:** Skip — acceptance criteria in Phase 5 will be contract-shaped (request/response, error codes, edge cases).
 - **Agentic:** Produce (1) tool schema — name, inputs, outputs, failure modes; (2) decision flow — numbered trigger → tool calls → branches; (3) HITL gate definitions; (4) guardrails — actions the agent must never take autonomously. **STOP — get explicit approval: "Agent design approved."**
-- **Web/Mobile:** A visual reference is required before Phase 5 — do not proceed without one. Say: "Let's prototype this with Claude Design now — I'll generate screens for each step from Phase 2. If you'd rather start from something you already have (Figma, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead." **Primary path:** generate with Claude Design — one screen per journey step, states: default, empty, loading, error, success, following existing UI patterns. **Alternative:** if PM shares an image, read it and annotate missing states and unhandled edge cases from Phase 3. Either way: **STOP — iterate until satisfied. Get explicit approval: "Design approved."**
+- **Web/Mobile:** A visual reference is required before Phase 5 — do not proceed without one. Say: "Let's prototype this with a design tool now — I'll generate screens for each step from Phase 2. If you'd rather start from something you already have (Figma, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead." **Primary path:** generate mockups — one screen per journey step, states: default, empty, loading, error, success, following existing UI patterns. **Alternative:** if PM shares an image, read it and annotate missing states and unhandled edge cases from Phase 3. Either way: **STOP — iterate until satisfied. Get explicit approval: "Design approved."**
 
 #### Phase 5 — Acceptance Criteria
 
@@ -317,7 +317,7 @@ Read PRD for the feature (FR-<ID> linked in the issue) for acceptance criteria. 
 
 ## Change Initialization
 
-Run this workflow when starting any Tier 1+ change. This replaces the `/hitl:apply-change` skill from the Claude Code plugin.
+Run this workflow when starting any Tier 1+ change. This is the Codex equivalent of the apply-change workflow.
 
 **Trigger:** User says "start a change", "initialize a change", "apply-change", or describes a new feature/fix they want to implement.
 
@@ -325,7 +325,7 @@ Run this workflow when starting any Tier 1+ change. This replaces the `/hitl:app
 
 ### Challenge Stance
 
-This workflow is a design-phase entrypoint. Before tier identification or impact analysis, apply the challenge standard from `ai/shared/challenge-stance.md`: require evidence for the problem, testable acceptance criteria, stated NFRs where relevant, and surface tradeoffs before agreeing to a solution. Resolve gaps now — not after the HLD is generated.
+This workflow is a design-phase entrypoint. Before tier identification or impact analysis, apply the challenge standard from `shared/challenge-stance.md` (under the plugin root): require evidence for the problem, testable acceptance criteria, stated NFRs where relevant, and surface tradeoffs before agreeing to a solution. Resolve gaps now — not after the HLD is generated.
 
 ### Steps
 
@@ -335,7 +335,7 @@ This workflow is a design-phase entrypoint. Before tier identification or impact
    - Are NFRs relevant to this change stated? If the change affects throughput, latency, or availability, are the targets in the issue or PRD? If not, ask.
    - Is there a simpler approach that solves the same problem? Name it and the tradeoff before proceeding.
 
-   Resolve any gap before moving to step 2. See `ai/shared/challenge-stance.md` for the full checklist.
+   Resolve any gap before moving to step 2. See `shared/challenge-stance.md` (under the plugin root) for the full checklist.
 
 2. **Identify the tier** from the table above. Ask if unclear.
 
@@ -680,7 +680,7 @@ Run once at project inception when designing a new system from scratch.
 
 1. Read the PRD from the path in $ARGUMENTS or `docs/01-product/prd.md`.
 2. Extract: system name, user personas, core use cases (3–5), functional requirements (must-have vs nice-to-have), NFRs (performance, scale, security, compliance), external integrations, tech stack constraints, out-of-scope items, open questions.
-3. Flag structural gaps (who owns what data, consistency requirements between capabilities, scale profile) **and** interrogate NFRs. Apply the full NFR checklist from `ai/shared/challenge-stance.md` — Minimum NFR Checklist section. For each NFR absent or vague in the PRD, ask the architect now. If an answer is genuinely unavailable, make a stated assumption with a specific number and flag it as a design risk in the gate below — do not proceed with an unnamed assumption embedded in the architecture.
+3. Flag structural gaps (who owns what data, consistency requirements between capabilities, scale profile) **and** interrogate NFRs. Apply the full NFR checklist from `shared/challenge-stance.md` (under the plugin root) — Minimum NFR Checklist section. For each NFR absent or vague in the PRD, ask the architect now. If an answer is genuinely unavailable, make a stated assumption with a specific number and flag it as a design risk in the gate below — do not proceed with an unnamed assumption embedded in the architecture.
 4. **STOP — ask architect to confirm requirements are complete, all NFR gaps are answered or explicitly assumed, and open questions are resolved before proceeding.**
 
 ### Phase 2 — Domain Decomposition
@@ -725,7 +725,7 @@ Identify and resolve every decision that blocks HLD generation:
 | Deployment model | System architecture HLD |
 | Observability stack | Observability HLD, conventions |
 
-For each: create `docs/02-design/technical/adrs/<decision>.md` using `ai/shared/templates/adr-template.md`. For decided: fill decision, ask architect for rationale. For open: list options and tradeoffs, **STOP and ask architect to decide before continuing**.
+For each: create `docs/02-design/technical/adrs/<decision>.md` using `shared/templates/adr-template.md` (under the plugin root). For decided: fill decision, ask architect for rationale. For open: list options and tradeoffs, **STOP and ask architect to decide before continuing**.
 
 Update `docs/02-design/technical/adrs/README.md`.
 
@@ -782,7 +782,7 @@ Translate the approved design into ordered work packets — one per slice — th
 
 3. **STOP — ask architect to confirm the delivery plan** before generating packets. Check: does each slice's demo check produce something concrete? Is the sequencing correct?
 
-4. **Generate one decision packet per confirmed slice** at `docs/decisions/issue-<N>-slice-<M>.yaml` (or `issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`:
+4. **Generate one decision packet per confirmed slice** at `docs/decisions/issue-<N>-slice-<M>.yaml` (or `issue-<N>.yaml` for single-slice domains) using `shared/templates/decision-packet-template.yaml` (under the plugin root):
 
    ```yaml
    issue: <N>
@@ -879,7 +879,7 @@ If status is `awaiting-*` or `blocked`, output the message and stop. Do not re-r
 
 ### Phase 1 — Impact Analysis and Scope
 
-1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `ai/shared/challenge-stance.md` for the full standard.
+1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `shared/challenge-stance.md` (under the plugin root) for the full standard.
 2. Read the system manifest — prefer a graph query:
    ```
    /graphify query "all domains and facade APIs"
@@ -921,7 +921,7 @@ For Tier 2+:
 
 After HLD approval:
 - Identify every design decision in the HLD.
-- Create ADR stubs at `docs/02-design/technical/adrs/<decision>.md` using `ai/shared/templates/adr-template.md`. Mark as "DRAFT — architect to complete rationale."
+- Create ADR stubs at `docs/02-design/technical/adrs/<decision>.md` using `shared/templates/adr-template.md` (under the plugin root). Mark as "DRAFT — architect to complete rationale."
 - Ask architect: "Are there decisions being made here that aren't visible in the design?"
 
 ### Phase 5 — LLD per Domain (Step 5, Part 3)
@@ -978,11 +978,11 @@ Training required for: new architectural pattern, new external system, new frame
 
 Not required for: new endpoints on existing patterns, bug fixes, model-preserving refactors.
 
-If required: create stub at `docs/03-engineering/training/<capability>.md` using `ai/shared/templates/training-plan-template.md`.
+If required: create stub at `docs/03-engineering/training/<capability>.md` using `shared/templates/training-plan-template.md` (under the plugin root).
 
 ### Phase 10 — Decision Packet Assembly (Step 9)
 
-For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `ai/shared/templates/decision-packet-template.yaml`. Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
+For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `shared/templates/decision-packet-template.yaml` (under the plugin root). Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
 
 After all packets are assembled:
 - Set `status: awaiting-packet-approval` in `.hitl/current-change.yaml`.
@@ -1024,7 +1024,7 @@ Next: TA runs the TA Gate Approval workflow; developers assigned after approval
 
 ## TA Gate Approval
 
-Run when the architect has set a gate to `awaiting-*` status and the Technical Advisor needs to review and advance (or reject) it. This replaces the `/hitl:ta-approve` skill from the Claude Code plugin.
+Run when the architect has set a gate to `awaiting-*` status and the Technical Advisor needs to review and advance (or reject) it. This is the Codex equivalent of the ta-approve workflow.
 
 **Who runs this:** Technical Advisor only. This workflow cannot be run by the architect on their own behalf.
 
@@ -1278,10 +1278,10 @@ Run before implementation on any Tier 2+ change. This replaces the `/hitl:genera
 ### New Feature Mode
 
 1. Determine the feature name (kebab-case).
-2. Create `docs/02-design/technical/hld/<feature-name>.md` using `ai/shared/templates/hld-template.md` (installed by `ai/codex/install.sh`). Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
+2. Create `docs/02-design/technical/hld/<feature-name>.md` using `shared/templates/hld-template.md` (under the plugin root) (installed by the plugin's install.sh). Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
 3. Update `docs/02-design/technical/hld/index.md`.
 4. **Stop — ask the user to review and approve the HLD** before creating the LLD.
-5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` using `ai/shared/templates/lld-component-template.md` (installed by `ai/codex/install.sh`). Include Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
+5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` using `shared/templates/lld-component-template.md` (under the plugin root) (installed by the plugin's install.sh). Include Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
 6. Update `docs/02-design/technical/lld/index.md` and `packages.md`.
 
 All diagrams must use Mermaid. No `<br/>` tags inside Mermaid blocks.
@@ -1459,7 +1459,7 @@ A deployment that fails health checks mid-rollout must be paused and investigate
 1. Read the thread content.
 2. Extract: what was decided, by whom, which alternatives were considered, rationale.
 3. If no clear decision is present: "I can't find a clear decision in this thread. Can you point me to the message where the team agreed?"
-4. Draft ADR at `docs/02-design/technical/adrs/<decision-name>.md` using `ai/shared/templates/adr-template.md`. Use the team's actual words for rationale — do not rephrase into generic architecture-speak. The ADR should sound like the team, not a textbook.
+4. Draft ADR at `docs/02-design/technical/adrs/<decision-name>.md` using `shared/templates/adr-template.md` (under the plugin root). Use the team's actual words for rationale — do not rephrase into generic architecture-speak. The ADR should sound like the team, not a textbook.
 5. **STOP — present draft and ask:** "Is this an accurate record of the decision?"
 6. On approval:
    - Save the ADR.
@@ -1503,7 +1503,7 @@ graphify . --directed --no-viz
 python3 -m graphify.serve graphify-out/graph.json
 ```
 
-`.mcp.json` is created by `ai/codex/install.sh` — it wires the MCP server so Codex can call `query_graph`, `get_node`, and `get_neighbors` as tools.
+`.mcp.json` is created by the plugin's `install.sh` — it wires the MCP server so Codex can call `query_graph`, `get_node`, and `get_neighbors` as tools.
 
 ### Keeping the graph current
 
@@ -1542,9 +1542,9 @@ Enforcement runs at two levels. Use both for the strongest guarantees:
 
 ### Codex lifecycle hooks (preferred — same timing as Claude Code)
 
-When `codex_hooks = true` is set in `.ai/codex/config.toml`, Codex loads `.ai/codex/hooks.json` and runs HITL context checks before each Write/Edit and boundary checks after — the same real-time enforcement as Claude Code's PreToolUse/PostToolUse hooks.
+When `codex_hooks = true` is set in `.ai/codex/config.toml`, Codex loads `.ai/codex/hooks.json` and runs HITL context checks before each Write/Edit and boundary checks after — the same real-time enforcement as PreToolUse/PostToolUse lifecycle hooks.
 
-Both files are installed by `ai/codex/install.sh`. The hook scripts live in `ai/codex/hook-scripts/`.
+Both files are installed by the plugin's install.sh. The hook scripts live in `ai/codex/hook-scripts/`.
 
 ### Git hooks (portable fallback)
 
