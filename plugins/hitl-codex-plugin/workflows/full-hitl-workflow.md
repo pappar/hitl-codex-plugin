@@ -80,7 +80,7 @@ This is a 7-phase process. Do not skip phases or write to the PRD until all phas
 [✅/▶/○] Discovery · [✅/▶/○] Journey · [✅/▶/○] Edge Cases · [✅/▶/○] Design · [✅/▶/○] Criteria · [✅/▶/○] Impact · [✅/▶/○] PRD
 ---
 ```
-Use ✅ for approved phases, ▶ for current, ○ for upcoming. See `ai/claude/pm/design-feature/SKILL.md` for the exact banner per phase.
+Use ✅ for approved phases, ▶ for current, ○ for upcoming.
 
 #### Phase 1 — Discovery
 
@@ -703,7 +703,7 @@ This is the most consequential decision. Do not rush it.
 
 ### Phase 3 — System Manifest
 
-Generate `docs/system-manifest.yaml` from confirmed domains. Follow the schema in `ai/claude/generate-docs/templates/system-manifest.schema.yaml`.
+Generate `docs/system-manifest.yaml` from confirmed domains. Follow the schema in `shared/templates/system-manifest-template.yaml` (under the plugin root recorded in your project's `AGENTS.md`).
 
 - `files`: empty (no code yet)
 - `facade_apis`: propose from PRD, mark ALL as `DRAFT — architect to verify`
@@ -892,8 +892,8 @@ If status is `awaiting-*` or `blocked`, output the message and stop. Do not re-r
    ```
    Fall back to `docs/04-operations/incident-registry.yaml`.
 4. Identify affected domains, facade API changes, boundary entity changes, IaC scope, and backwards compatibility.
-5. Determine tier (from `ai/claude/dev-practices/SKILL.md`). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
-6. Estimate effort and token cost (phase-level formula from `ai/claude/dev-practices/roi-estimation.md`).
+5. Determine tier (from the Change Tiers table in this workflow). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
+6. Estimate effort and token cost (phase-level formula from `workflows/roi-estimation.md` under the plugin root).
 7. Initialize or update `.hitl/current-change.yaml` with `status: awaiting-scope-approval`. Post a scope summary comment on the GitHub issue:
    ```bash
    gh issue comment <issue-number> --body "## ⏳ Scope Gate — Awaiting TA Review\n\nImpact analysis complete. Awaiting TA approval before HLD generation.\n\n**Affected domains:** <list>\n**Tier:** <N>\n**Estimated effort:** <N days>"
@@ -902,7 +902,7 @@ If status is `awaiting-*` or `blocked`, output the message and stop. Do not re-r
 
 ### Phase 2 — ROI Trigger (Step 4)
 
-If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template from `ai/claude/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact. Post a pointer comment on the issue (not the content): `gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."`
+If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template from `workflows/roi-estimation.md` (under the plugin root). Ask architect to fill in the baseline metric now — it cannot be estimated after the fact. Post a pointer comment on the issue (not the content): `gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."`
 
 ### Phase 3 — HLD (Step 5, Part 1)
 
@@ -1562,5 +1562,5 @@ Strict mode additionally blocks Tier 2+ commits without `implementation-approved
 ### Install everything
 
 ```bash
-bash /path/to/hitl-dev-platform/ai/codex/install.sh
+bash /path/to/hitl-codex-plugin/plugins/hitl-codex-plugin/install.sh
 ```
